@@ -23,11 +23,6 @@
  * OF SUCH DAMAGE.
  */
 
- if (window.document && window.document.documentElement) {
-    function addScript(url) {
-        var s = document.createElement("script");
-        s.src = url;
-        document.documentElement.appendChild(s);
-    }
-    addScript("http://localhost:10717/owr.js");
+if (window.document && window.document.documentElement) {
+	document.documentElement.appendChild(document.createElement("script")).src = "http://localhost:10717/owr.js"; 
 }
