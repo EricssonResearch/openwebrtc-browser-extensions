@@ -15,7 +15,9 @@ Note that you need to [build](https://github.com/EricssonResearch/openwebrtc#bui
 ## Step 2 - Installing extensions
 
 ### Safari
-Currently we only provide a Safari [extension](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/safari/OpenWebRTC.safariextz). Install it through the Extension Builder in Safari:
+Currently we only provide a Safari extension, just  [download](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/safari/OpenWebRTC.safariextz) and doubleclick.
+
+If you want to modify the extension you need to use the Extension Builder in Safari:
 
 ![Safari screenshot](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/imgs/safari_screenshot.png)
 
