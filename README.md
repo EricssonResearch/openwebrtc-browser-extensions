@@ -14,7 +14,7 @@ Note that you need to [build](https://github.com/EricssonResearch/openwebrtc#bui
 
 ### Safari
 Currently we only provide a Safari extension. Install it through the Extensions Builder in Safari:
-![alt tag](https://raw.github.com/EricssonResearch/openwebrtc-browser-extensions/master/imgs/safari_screenshot.png)
+![Safari screenshot](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/imgs/safari_screenshot.png)
 
 ### Firefox
 Even though Firefox already has WebRTC support you may want to use OpenWebRTC as a backend. You should be able to use a [Greasemonkey](https://github.com/greasemonkey/greasemonkey/) script and quite easily inject code like this:
