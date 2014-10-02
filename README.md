@@ -4,8 +4,8 @@ OpenWebRTC browser extensions
 Add WebRTC support to existing browsers using OpenWebRTC
 
 ## Step 1 - Running the daemon
-OpenWebRTC browser extensions communicates with the *daemon* via its local web server. Before any page load, extensions fetch JavaScript from the daemon containing WebRTC functionality and injects it in to the current context. The daemon runs in a separate process in the backgound. 
-
+OpenWebRTC browser extensions communicates with the *daemon* via its local web server. Before any page load, extensions fetch JavaScript from the daemon containing WebRTC functionality and injects it in to the current context. The daemon runs in a separate process in the backgound.
+![Daemon screenshot](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/imgs/daemon.png)
 Start the daemon by running:
 ```
 ./openwebrtc/out/x86_64-apple-darwin/bin/daemon
@@ -16,8 +16,6 @@ Note that you need to [build](https://github.com/EricssonResearch/openwebrtc#bui
 
 ### Safari
 Currently we only provide a Safari extension, just  [download](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/safari/OpenWebRTC.safariextz) and doubleclick.
-
-![Daemon screenshot](https://github.com/EricssonResearch/openwebrtc-browser-extensions/blob/master/imgs/daemon.png)
 
 If you want to modify the extension you need to use the Extension Builder in Safari:
 
