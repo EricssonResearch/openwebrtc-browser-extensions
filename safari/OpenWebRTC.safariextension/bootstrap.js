@@ -25,3 +25,4 @@
 
 if (window.document && window.document.documentElement)
     document.documentElement.appendChild(document.createElement("script")).src = "http://localhost:10717/owr.js";
+    document.documentElement.appendChild(document.createElement("script")).innerHTML = "if (!window.performance) window.performance = {now: function () {return 37;}};"
