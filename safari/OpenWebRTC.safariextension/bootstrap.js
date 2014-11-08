@@ -23,5 +23,9 @@
  * OF SUCH DAMAGE.
  */
 
-if (window.document && window.document.documentElement)
-    document.documentElement.appendChild(document.createElement("script")).src = "http://localhost:10717/owr.js";
+
+if (window.document && window.document.documentElement) {
+   var owrtag = document.createElement("script");
+   document.documentElement.appendChild(owrtag);
+   owrtag.src = "http://localhost:10717/owr.js";
+}

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<!--
+   /*
+ * Copyright (c) 2015, Ericsson AB. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
+ */
+-->
+<html>
+<head>
+<title>OWR Bar</title>
+<script type="text/javascript">
+
+    var users = [];
+    var requester = null; // we will deal with one at a time only, no need for a list.
+    var bridgeSocket;
+    var bridgeSocketConnectAttempt;
+    var requestId = null;
+    var timeoutId = null;
+
+    function clearBar () {
+        if (document.body.firstChild) {
+            while (document.body.firstChild)
+                document.body.removeChild(document.body.firstChild);
+        }
+    }
+
+    function setupBridgeSocket () {
+        bridgeSocket = null;
+        bridgeSocket = new WebSocket("ws://localhost:10719/bridge");
+
+        bridgeSocket.onopen = function () {
+            clearInterval(bridgeSocketConnectAttempt);
+            console.info("bridgeSocket open");
+        }
+        bridgeSocket.onmessage = reactOnMessage;
+
+        bridgeSocket.onerror = function () {
+            console.error("bridgeSocket did not connect but ended in error");
+            bridgeSocket = null;
+        };
+
+        bridgeSocket.onclose = function () {
+            console.warn("bridgeSocket closed");
+
+            bridgeSocket = null;
+            setTimeout(setupBridgeSocket, 3000);
+        };
+    }
+
+    function showUsers () {
+        clearBar();
+        var dispButton = null;
+        // get the button assigned
+        for (var i = 0; i < safari.extension.toolbarItems.length; i++) {
+            if (safari.extension.toolbarItems[i].identifier == "camsym")
+                dispButton = safari.extension.toolbarItems[i];
+        }
+
+        dispButton.menu = null;
+
+        safari.extension.removeMenu("dispmenu");
+
+        var dispMenu = safari.extension.createMenu("dispmenu");
+
+        if (users.length > 0) {
+            safari.self.show(false);
+            dispButton.disabled = false;
+
+            dispMenu.appendMenuItem("Header", "The following Tabs are using camera and/or microphone:");
+
+            users.forEach(function (element) {
+                dispMenu.appendSeparator();
+                dispMenu.appendMenuItem("UserTabId-" + element.Id, element.url);
+            });
+
+            document.body.style.backgroundColor = "red";
+            safari.self.show();
+            var newElement = document.createElement("span");
+            newElement.id = "msg";
+            newElement.innerHTML = "Beware, site(s) are using your camera and/or microphone. Click at camera symbol in Toolbar for more information.";
+            document.body.insertBefore(newElement, document.body.firstChild);
+        } else {
+            dispMenu.appendMenuItem("Header", "Neither camera nor microphone in use");
+            dispButton.disabled = true;
+            safari.self.hide(true);
+            document.body.style.backgroundColor = null;
+        }
+        dispButton.menu = dispMenu;
+    }
+
+    function removeReqListeners (item) {
+        item.removeEventListener("close", handleRequestingTabEvent, false);
+        item.removeEventListener("beforeNavigate", handleRequestingTabEvent, false);
+        item.removeEventListener("navigate", handleRequestingTabEvent, false);         
+    }
+
+    function removeUseListeners (item) {
+        item.removeEventListener("close", handleUsingTabEvent, false);
+        item.removeEventListener("beforeNavigate", handleUsingTabEvent, false);
+        item.removeEventListener("navigate", handleUsingTabEvent, false);         
+    }
+
+    function handleUsingTabEvent (evt) {
+        removeUseListeners(evt.target);
+        removeFromList(evt.target);
+        showUsers();
+    }
+
+    function handleRequestingTabEvent (evt) {
+        document.getElementById("rejectElement").click();
+        removeReqListeners(evt.target);
+    }
+
+    function removeFromList (item) {
+        removeUseListeners(item);
+        var index = users.indexOf(item);
+        var itemToRemove = users[index].Id;
+        users.splice(index, 1);
+    } 
+
+    function handleTimeout () {
+        document.getElementById("rejectElement").click();
+    }
+
+    function rejectAccess (evt) {
+        clearTimeout(timeoutId); // user closed tab or surfed away - clearing timeout
+        if (evt.target.requester.Tab) {
+            removeReqListeners(evt.target.requester.Tab);
+        }
+        var dispButton = null;
+        for (var i = 0; i < safari.extension.toolbarItems.length; i++) {
+            if (safari.extension.toolbarItems[i].identifier == "camsym") {
+                dispButton = safari.extension.toolbarItems[i];
+            }
+        }
+
+        dispButton.menu = null;
+
+        safari.extension.removeMenu("dispmenu");
+        var returnMessage = {
+            "name": "reject",
+            "Id": evt.target.requester.Id
+        }
+        bridgeSocket.send(JSON.stringify(returnMessage));
+        showUsers();
+    }
+
+    function acceptAccess (evt) {
+        clearTimeout(timeoutId);
+        removeReqListeners(evt.target.requester.Tab);
+        evt.target.requester.Tab.addEventListener("close", handleUsingTabEvent, false);
+        evt.target.requester.Tab.addEventListener("beforeNavigate", handleUsingTabEvent, false);
+        evt.target.requester.Tab.addEventListener("navigate", handleUsingTabEvent, false);
+        users.push(evt.target.requester.Tab);
+        showUsers();
+
+        var returnMessage = {
+            "name": "accept",
+            "Id": evt.target.requester.Id,
+            "acceptSourceInfos": evt.target.requester.sourceInfos  // current version is that simple,
+                                                                   // no way to select specific sources
+        }
+        bridgeSocket.send(JSON.stringify(returnMessage));
+        requestId = null;
+    }
+
+    function reactOnMessage(messageEvent) {
+        var message = JSON.parse(messageEvent.data);
+        if (message.name === "request") {
+            requester = new Object();
+            requester.sourceInfos = message.requestSourceInfos;
+            requester.Id = message.Id;
+            var rejectElement = document.createElement("input");
+            rejectElement.type = "button";
+            rejectElement.id = "rejectElement";
+            rejectElement.value = "Don't allow";
+            rejectElement.requester = requester;
+            rejectElement.addEventListener('click', rejectAccess, false);
+
+            var tempUrl = safari.application.activeBrowserWindow.activeTab.url;
+            var intermediate = tempUrl.split("://")
+            var activeTabOrigin = intermediate[0] + "://" + intermediate[1].slice(0, intermediate[1].indexOf("/"));
+            if (activeTabOrigin == message.origin) {
+                requester.Tab = safari.application.activeBrowserWindow.activeTab;
+                requester.Tab.addEventListener("close", handleRequestingTabEvent, false);
+                requester.Tab.addEventListener("beforeNavigate", handleRequestingTabEvent, false);
+                requester.Tab.addEventListener("navigate", handleRequestingTabEvent, false);
+                requester.Tab.Id = requester.Id;
+
+                clearBar();
+                document.body.style.backgroundColor = "";
+
+                var newElement = document.createElement("span");
+                newElement.id = "msg";
+                newElement.innerHTML = "Click on the camera symbol in toolbar for more info.";
+                document.body.insertBefore(newElement, document.body.firstChild);
+                newElement = document.createElement("input");
+                newElement.type = "button";
+                newElement.id = "accept";
+                newElement.value = "Allow";
+                newElement.requester = requester;
+                newElement.addEventListener('click', acceptAccess, false);
+                document.body.insertBefore(newElement, document.body.firstChild);
+                document.body.insertBefore(rejectElement, document.body.firstChild);
+                newElement = document.createElement("span");
+                newElement.id = "msg";
+                newElement.innerHTML = "The site " + activeTabOrigin +  " wants to access your camera and microphone, accept or reject:";
+                document.body.insertBefore(newElement, document.body.firstChild);
+                safari.self.show();
+                timeoutId = setTimeout(handleTimeout, 30000); // If no selection is made within 30 secs, treat as reject 
+
+                var dispButton = null;
+                for (var i = 0; i < safari.extension.toolbarItems.length; i++) {
+                    if (safari.extension.toolbarItems[i].identifier == "camsym")
+                        dispButton = safari.extension.toolbarItems[i];
+                }
+
+                dispButton.menu = null;
+
+                safari.extension.removeMenu("dispmenu");
+
+                dispButton.disabled = false;
+
+                var dispMenu = safari.extension.createMenu("dispmenu");
+
+                dispMenu.appendMenuItem("Header", "The site is asking for permission to use:");
+                
+                requester.sourceInfos.forEach(function (element, index) {
+                    dispMenu.appendSeparator();
+                    dispMenu.appendMenuItem("SourceIndex-" + index, element.label);
+                });
+                dispButton.menu = dispMenu;
+
+            } else {
+                console.warn("mismatch of origins - rejecting");
+                console.warn("bridgeSocket origin: " + message.origin);
+                console.warn("tab origin: " + activeTabOrigin);
+                rejectElement.click();
+            }
+        } else
+            console.error("wrong message name");
+    }
+
+    window.onload = function () { 
+        safari.self.hide(true);
+        setupBridgeSocket();
+        showUsers();
+    }
+
+</script>
+</head>
+<body>
+
+</body>
+</html>
