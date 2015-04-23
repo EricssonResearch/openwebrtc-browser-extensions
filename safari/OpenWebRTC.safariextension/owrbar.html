@@ -187,6 +187,15 @@
     function reactOnMessage(messageEvent) {
         var message = JSON.parse(messageEvent.data);
         if (message.name === "request") {
+            if (safari.extension.settings.disable_gum_dialog) {
+                bridgeSocket.send(JSON.stringify({
+                    "name": "accept",
+                    "Id": message.Id,
+                    "acceptSourceInfos": message.requestSourceInfos,
+                }));
+                requestId = null;
+                return;
+            }
             requester = new Object();
             requester.sourceInfos = message.requestSourceInfos;
             requester.Id = message.Id;
