@@ -23,9 +23,10 @@
  * OF SUCH DAMAGE.
  */
 
-
-if (window.document && window.document.documentElement) {
-   var owrtag = document.createElement("script");
-   document.documentElement.appendChild(owrtag);
-   owrtag.src = "http://localhost:10717/owr.js";
-}
+try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "http://localhost:10717/owr.js", false);
+    xhr.send();
+    var scriptElement = document.documentElement.appendChild(document.createElement("script"));
+    scriptElement.src = "data:text/javascript;base64," + btoa(xhr.responseText);
+} catch (e) {}
