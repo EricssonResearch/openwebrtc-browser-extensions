@@ -5,7 +5,7 @@
 	<key>Author</key>
 	<string>Ericsson Research</string>
 	<key>Builder Version</key>
-	<string>10600.3.18</string>
+	<string>11601.4.4</string>
 	<key>CFBundleDisplayName</key>
 	<string>OpenWebRTC</string>
 	<key>CFBundleIdentifier</key>
@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2</string>
+	<string>0.3</string>
 	<key>CFBundleVersion</key>
-	<string>1.1</string>
+	<string>1.2</string>
 	<key>Chrome</key>
 	<dict>
 		<key>Bars</key>
@@ -51,6 +51,8 @@
 	</dict>
 	<key>Description</key>
 	<string>Add WebRTC support using OpenWebRTC</string>
+	<key>DeveloperIdentifier</key>
+	<string>TBA</string>
 	<key>ExtensionInfoDictionaryVersion</key>
 	<string>1.0</string>
 	<key>Permissions</key>
